@@ -20,9 +20,10 @@ from datetime import datetime
 import requests
 
 try:
-    from xhtml2pdf import pisa
-except ImportError:
-    pisa = None
+    from pdf_generator import create_targetpro_pdf
+except Exception as e:
+    create_targetpro_pdf = None
+    print("Failed to import pdf_generator:", e)
 
 PORT = int(os.environ.get("PORT", 8765))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -318,6 +319,8 @@ class TargetProHandler(BaseHTTPRequestHandler):
             raw_handle = req_data.get("handle", "report")
             safe_handle = re.sub(r'[^A-Za-z0-9._-]', '', raw_handle) or "report"
             tg_user_id = str(req_data.get("tgUserId", "")).strip()
+            target_data = req_data.get("targetData") or {}
+            smm_digital = req_data.get("smmDigital") or {}
             pdf_base64 = req_data.get("pdfBase64", "")
             html_content = req_data.get("html", "")
 
@@ -327,8 +330,18 @@ class TargetProHandler(BaseHTTPRequestHandler):
 
             pdf_bytes = None
 
-            # Priority 1: High-fidelity client-rendered PDF bytes (perfect CSS/Grid/Fonts)
-            if pdf_base64:
+            # Priority 1: High quality server-side ReportLab PDF (with Cyrillic font support)
+            if create_targetpro_pdf:
+                try:
+                    pdf_bytes = create_targetpro_pdf(safe_handle, target_data, smm_digital)
+                    if pdf_bytes:
+                        with open(pdf_path, "wb") as f:
+                            f.write(pdf_bytes)
+                except Exception as e:
+                    print("create_targetpro_pdf error:", e)
+
+            # Priority 2: Client-rendered PDF bytes fallback
+            if not pdf_bytes and pdf_base64:
                 try:
                     if "," in pdf_base64:
                         pdf_base64 = pdf_base64.split(",", 1)[1]
@@ -338,8 +351,8 @@ class TargetProHandler(BaseHTTPRequestHandler):
                 except Exception as e:
                     print("base64 decode error:", e)
 
-            # Priority 2: Server-side pisa rendering fallback
-            if not pdf_bytes and pisa and html_content:
+            # Priority 3: Pisa fallback if available
+            if not pdf_bytes and 'pisa' in globals() and pisa and html_content:
                 try:
                     pdf_buf = io.BytesIO()
                     pisa_status = pisa.CreatePDF(html_content, dest=pdf_buf, encoding="utf-8")
@@ -366,6 +379,9 @@ class TargetProHandler(BaseHTTPRequestHandler):
                     r = requests.post(doc_url, data=data, files=files, timeout=20)
                     if r.status_code == 200 and r.json().get("ok"):
                         sent_to_tg = True
+                        print(f"Delivered PDF to Telegram ID {tg_user_id}")
+                    else:
+                        print(f"Telegram sendDocument response: {r.text}")
                 except Exception as e:
                     print("TG sendDoc error:", e)
 
