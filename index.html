@@ -20,6 +20,8 @@
   </script>
   <!-- Combined lightweight database script deferred for 0ms initial render -->
   <script src="app-db.js" defer></script>
+  <!-- Fast client-side PDF export library for mobile & desktop -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     /* ==========================================================================
        ПСИХОЛОГИЧЕСКАЯ ПАЛИТРА ИЗ 3 ЦВЕТОВ (ЛЁГКОСТЬ, ЯСНОСТЬ, СПОКОЙСТВИЕ):
@@ -423,7 +425,7 @@
       <div class="subbox" style="margin:16px 0; display:flex; flex-direction:column; gap:8px; text-align:left; font-size:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span>📢 Telegram:</span>
-          <strong style="color:var(--accent);">@imamaliev_ai</strong>
+          <strong style="color:var(--accent);">@TargetPro_ai</strong>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span>📸 Instagram:</span>
@@ -432,8 +434,8 @@
       </div>
 
       <div style="display:flex; flex-direction:column; gap:10px;">
-        <a id="gateSubLinkBtn" href="https://t.me/imamaliev_ai" target="_blank" onclick="onSubLinkClicked()" class="btn-primary" style="width:100%;">
-          1. Подписаться на Telegram @imamaliev_ai
+        <a id="gateSubLinkBtn" href="https://t.me/TargetPro_ai" target="_blank" onclick="onSubLinkClicked()" class="btn-primary" style="width:100%;">
+          1. Подписаться на Telegram @TargetPro_ai
         </a>
         <a id="gateInstaLinkBtn" href="https://instagram.com/imamaliev.ads" target="_blank" onclick="onInstaLinkClicked()" class="btn-primary" style="width:100%; background:var(--accent-hover);">
           2. Подписаться на Instagram @imamaliev.ads
@@ -1103,19 +1105,46 @@
       const oldLabel = btn ? btn.innerHTML : '📄 Скачать PDF';
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '⏳ Готовим PDF...';
+        btn.innerHTML = '⏳ Формируем PDF...';
       }
 
+      const handle = (lastScannedProfile && lastScannedProfile.handle) ? lastScannedProfile.handle : 'report';
+      const fileName = `TargetPro-AI-${handle}.pdf`;
+      const styleCss = document.querySelector('style')?.innerHTML || '';
+      const clone = resultEl.cloneNode(true);
+      clone.querySelectorAll('.no-print').forEach(el => el.remove());
+      const fullHtml = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>TargetPro AI — @${handle}</title><style>${styleCss} body{background:#FFFFFF;padding:16px;color:#1E293B;} .card{box-shadow:none;margin-top:14px;}</style></head><body><div class="container">${clone.innerHTML}</div></body></html>`;
+
+      let clientPdfDownloaded = false;
+
+      // 1. Client-side instant PDF export (works in all browsers & phones)
+      if (window.html2pdf) {
+        try {
+          const exportContainer = document.createElement('div');
+          exportContainer.style.background = '#FFFFFF';
+          exportContainer.style.padding = '16px';
+          exportContainer.style.color = '#1E293B';
+          exportContainer.appendChild(clone.cloneNode(true));
+
+          const opt = {
+            margin: [8, 8, 8, 8],
+            filename: fileName,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+          await window.html2pdf().set(opt).from(exportContainer).save();
+          clientPdfDownloaded = true;
+          if (btn) btn.innerHTML = '✅ PDF скачан!';
+        } catch(err) {
+          console.warn('html2pdf client error:', err);
+        }
+      }
+
+      // 2. Server-side PDF export & Telegram Bot delivery
       try {
-        const styleCss = document.querySelector('style')?.innerHTML || '';
-        const clone = resultEl.cloneNode(true);
-        clone.querySelectorAll('.no-print').forEach(el => el.remove());
-
-        const handle = (lastScannedProfile && lastScannedProfile.handle) ? lastScannedProfile.handle : 'report';
-        const fullHtml = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>TargetPro AI — @${handle}</title><style>${styleCss} body{background:#FFFFFF;padding:16px;} .card{box-shadow:none;margin-top:14px;}</style></head><body><div class="container">${clone.innerHTML}</div></body></html>`;
-
         const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || '';
-        const apiBase = window.location.protocol.startsWith('http') ? '' : 'http://localhost:8765';
+        const apiBase = window.location.protocol.startsWith('http') ? '' : 'https://targetpro-ai.onrender.com';
 
         const res = await fetch(`${apiBase}/api/export-pdf`, {
           method: 'POST',
@@ -1124,38 +1153,27 @@
         });
         const data = await res.json();
 
-        if (data && data.ok && data.downloadUrl) {
-          const fullPdfUrl = window.location.origin + data.downloadUrl;
+        if (data && data.ok) {
           if (data.sentToTelegram) {
-            if (btn) btn.innerHTML = '✅ Отправлено в чат бота!';
+            if (btn) btn.innerHTML = '✅ Отправлен в чат бота!';
             if (window.Telegram?.WebApp?.showAlert) {
               window.Telegram.WebApp.showAlert('Готово! PDF-файл с разбором отправлен вам прямо в чат бота @targetPro_ai_bot!');
             }
-          } else if (window.Telegram?.WebApp?.initData) {
-            if (window.Telegram.WebApp.downloadFile) {
-              window.Telegram.WebApp.downloadFile({ url: fullPdfUrl, file_name: data.fileName || 'TargetPro-AI.pdf' });
-            } else if (window.Telegram.WebApp.openLink) {
-              window.Telegram.WebApp.openLink(fullPdfUrl);
-            } else {
-              window.location.href = fullPdfUrl;
-            }
-            if (btn) btn.innerHTML = '✅ PDF готов!';
-          } else {
+          } else if (data.downloadUrl && !clientPdfDownloaded) {
+            const fullPdfUrl = window.location.origin + data.downloadUrl;
             const a = document.createElement('a');
             a.href = fullPdfUrl;
-            a.download = data.fileName || 'TargetPro-AI.pdf';
+            a.download = data.fileName || fileName;
             document.body.appendChild(a);
             a.click();
             a.remove();
             if (btn) btn.innerHTML = '✅ Скачано!';
           }
-        } else {
+        } else if (!clientPdfDownloaded) {
           window.print();
-          if (btn) btn.innerHTML = oldLabel;
         }
       } catch (e) {
-        window.print();
-        if (btn) btn.innerHTML = oldLabel;
+        if (!clientPdfDownloaded) window.print();
       }
 
       setTimeout(() => {
@@ -1180,11 +1198,11 @@
     // Telegram Gate
     let tgAppConfig = {
       requireSub: true,
-      channelUsername: "@imamaliev_ai",
+      channelUsername: "@TargetPro_ai",
       channelTitle: "TargetPro AI",
-      channelUrl: "https://t.me/imamaliev_ai",
+      channelUrl: "https://t.me/TargetPro_ai",
       hasBotToken: true,
-      publicAppUrl: "https://c8811dfa758293.lhr.life"
+      publicAppUrl: "https://targetpro-ai.onrender.com"
     };
     let userClickedSubscribeLink = false;
 

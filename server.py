@@ -6,6 +6,7 @@ Runs 24/7 on Render / Cloud VPS / Docker
 """
 import os
 import sys
+import io
 import time
 import json
 import gzip
@@ -15,9 +16,18 @@ import urllib.request
 import urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
+import requests
+
+try:
+    from xhtml2pdf import pisa
+except ImportError:
+    pisa = None
 
 PORT = int(os.environ.get("PORT", 8765))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PDFS_DIR = os.path.join(BASE_DIR, "pdfs")
+os.makedirs(PDFS_DIR, exist_ok=True)
+
 CONFIG_PATH = os.path.join(BASE_DIR, "tg-config.json")
 MESSAGES_PATH = os.path.join(BASE_DIR, "tg-messages.json")
 LEADS_PATH = os.path.join(BASE_DIR, "leads.txt")
@@ -43,13 +53,13 @@ def get_config():
     if not cfg:
         cfg = {
             "requireSub": True,
-            "channelUsername": "@imamaliev_ai",
+            "channelUsername": "@TargetPro_ai",
             "channelTitle": "TargetPro AI",
-            "channelUrl": "https://t.me/imamaliev_ai",
+            "channelUrl": "https://t.me/TargetPro_ai",
             "instagramUsername": "@imamaliev.ads",
             "instagramUrl": "https://instagram.com/imamaliev.ads",
             "botToken": "9123687890:AAGiLeWOkWszeEt6S1vMLVZ6k1LRrDEGdFY",
-            "publicAppUrl": ""
+            "publicAppUrl": "https://targetpro-ai.onrender.com"
         }
     render_url = os.environ.get("RENDER_EXTERNAL_URL", "").strip()
     if render_url and not cfg.get("publicAppUrl"):
@@ -110,12 +120,12 @@ class TargetProHandler(BaseHTTPRequestHandler):
             cfg = get_config()
             public_cfg = {
                 "requireSub": cfg.get("requireSub", True),
-                "channelUsername": cfg.get("channelUsername", "@imamaliev_ai"),
+                "channelUsername": cfg.get("channelUsername", "@TargetPro_ai"),
                 "channelTitle": cfg.get("channelTitle", "TargetPro AI"),
-                "channelUrl": cfg.get("channelUrl", "https://t.me/imamaliev_ai"),
+                "channelUrl": cfg.get("channelUrl", "https://t.me/TargetPro_ai"),
                 "instagramUsername": cfg.get("instagramUsername", "@imamaliev.ads"),
                 "instagramUrl": cfg.get("instagramUrl", "https://instagram.com/imamaliev.ads"),
-                "publicAppUrl": cfg.get("publicAppUrl", "")
+                "publicAppUrl": cfg.get("publicAppUrl", "https://targetpro-ai.onrender.com")
             }
             body = json.dumps(public_cfg, ensure_ascii=False).encode("utf-8")
             self.send_response(200)
@@ -131,7 +141,7 @@ class TargetProHandler(BaseHTTPRequestHandler):
             user_id = query.get("user_id", [""])[0].strip()
             cfg = get_config()
             token = cfg.get("botToken", "").strip()
-            chan = cfg.get("channelUsername", "@imamaliev_ai").strip()
+            chan = cfg.get("channelUsername", "@TargetPro_ai").strip()
 
             is_subscribed = False
             if user_id and token:
@@ -153,7 +163,7 @@ class TargetProHandler(BaseHTTPRequestHandler):
                 "ok": True,
                 "subscribed": is_subscribed,
                 "channelUsername": chan,
-                "channelUrl": cfg.get("channelUrl", "https://t.me/imamaliev_ai")
+                "channelUrl": cfg.get("channelUrl", "https://t.me/TargetPro_ai")
             }
             body = json.dumps(resp_obj, ensure_ascii=False).encode("utf-8")
             self.send_response(200)
@@ -215,7 +225,29 @@ class TargetProHandler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
-        # 4. Static Files
+        # 4. Serve Generated PDFs: /pdfs/<filename>
+        if path.startswith("/pdfs/"):
+            pdf_filename = os.path.basename(path)
+            pdf_filepath = os.path.join(PDFS_DIR, pdf_filename)
+            if os.path.exists(pdf_filepath) and os.path.isfile(pdf_filepath):
+                try:
+                    with open(pdf_filepath, "rb") as f:
+                        pdf_data = f.read()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/pdf")
+                    self.send_header("Content-Disposition", f'attachment; filename="{pdf_filename}"')
+                    self.send_cors_headers()
+                    self.send_header("Content-Length", str(len(pdf_data)))
+                    self.end_headers()
+                    self.wfile.write(pdf_data)
+                    return
+                except Exception:
+                    pass
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        # 5. Static Files (index.html, app-db.js, etc.)
         filename = "index.html" if path in ["/", ""] else path.lstrip("/")
         filepath = os.path.join(BASE_DIR, filename)
 
@@ -272,12 +304,71 @@ class TargetProHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'{"error":"Forbidden"}')
             return
 
+        # 6. PDF Generation & Telegram Delivery
         if path == "/api/export-pdf":
+            content_len = int(self.headers.get("Content-Length", 0))
+            post_body = self.rfile.read(content_len).decode("utf-8", "ignore")
+            req_data = {}
+            try:
+                req_data = json.loads(post_body)
+            except Exception:
+                pass
+
+            raw_handle = req_data.get("handle", "report")
+            safe_handle = re.sub(r'[^A-Za-z0-9._-]', '', raw_handle) or "report"
+            tg_user_id = str(req_data.get("tgUserId", "")).strip()
+            html_content = req_data.get("html", "")
+
+            stamp_id = datetime.now().strftime("%H%M%S")
+            file_name = f"TargetPro-AI-{safe_handle}-{stamp_id}.pdf"
+            pdf_path = os.path.join(PDFS_DIR, file_name)
+
+            pdf_generated = False
+            pdf_bytes = None
+
+            if pisa and html_content:
+                try:
+                    pdf_buf = io.BytesIO()
+                    pisa_status = pisa.CreatePDF(html_content, dest=pdf_buf, encoding="utf-8")
+                    if not pisa_status.err:
+                        pdf_bytes = pdf_buf.getvalue()
+                        with open(pdf_path, "wb") as f:
+                            f.write(pdf_bytes)
+                        pdf_generated = True
+                except Exception as e:
+                    print("pisa error:", e)
+
+            # Send document to Telegram chat if user opened via Telegram bot
+            sent_to_tg = False
+            cfg = get_config()
+            token = cfg.get("botToken", "")
+            if pdf_bytes and token and tg_user_id.isdigit():
+                try:
+                    doc_url = f"https://api.telegram.org/bot{token}/sendDocument"
+                    files = {"document": (file_name, pdf_bytes, "application/pdf")}
+                    data = {
+                        "chat_id": tg_user_id,
+                        "caption": f"📄 Готово! Ваш детальный PDF-разбор Instagram для @{safe_handle} от TargetPro AI"
+                    }
+                    r = requests.post(doc_url, data=data, files=files, timeout=15)
+                    if r.status_code == 200 and r.json().get("ok"):
+                        sent_to_tg = True
+                except Exception as e:
+                    print("TG sendDoc error:", e)
+
+            resp_payload = {
+                "ok": pdf_generated or sent_to_tg,
+                "sentToTelegram": sent_to_tg,
+                "downloadUrl": f"/pdfs/{file_name}" if pdf_generated else "",
+                "fileName": file_name
+            }
+            body = json.dumps(resp_payload, ensure_ascii=False).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_cors_headers()
+            self.send_header("Content-Length", str(len(body)))
             self.end_headers()
-            self.wfile.write(b'{"ok":false,"message":"Print fallback"}')
+            self.wfile.write(body)
             return
 
         self.send_response(404)
@@ -356,8 +447,8 @@ def bot_worker_loop():
 
                 log_lead(f"BOT_USER: {first_name} (user:{username} id:{user_id}) | Msg: {text_in}")
 
-                chan = cfg.get("channelUsername", "@imamaliev_ai")
-                chan_url = cfg.get("channelUrl", "https://t.me/imamaliev_ai")
+                chan = cfg.get("channelUsername", "@TargetPro_ai")
+                chan_url = cfg.get("channelUrl", "https://t.me/TargetPro_ai")
                 insta_user = cfg.get("instagramUsername", "@imamaliev.ads")
                 insta_url = cfg.get("instagramUrl", "https://instagram.com/imamaliev.ads")
 
@@ -418,7 +509,6 @@ def bot_worker_loop():
             time.sleep(3)
 
 def main():
-    # Start bot worker in background thread
     t = threading.Thread(target=bot_worker_loop, daemon=True)
     t.start()
 
