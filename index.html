@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>TargetPro AI — Умный разбор Instagram и Маркетинг-план</title>
+  <!-- Telegram WebApp SDK early init (instant loading & dismisses Telegram spinner) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    (function() {
+      try {
+        if (window.Telegram && window.Telegram.WebApp) {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+          if (window.Telegram.WebApp.setHeaderColor) window.Telegram.WebApp.setHeaderColor('#FFFFFF');
+          if (window.Telegram.WebApp.setBackgroundColor) window.Telegram.WebApp.setBackgroundColor('#F4F7F6');
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <!-- Combined lightweight database script deferred for 0ms initial render -->
+  <script src="app-db.js" defer></script>
+  <style>
+    /* ==========================================================================
+       ПСИХОЛОГИЧЕСКАЯ ПАЛИТРА ИЗ 3 ЦВЕТОВ (ЛЁГКОСТЬ, ЯСНОСТЬ, СПОКОЙСТВИЕ):
+       1. База (Воздух, 75%): #F4F7F6 (мягкий утренний фон) и #FFFFFF (чистый лист)
+       2. Текст (Фокус, 15%): #1E293B (спокойный графит) и #64748B (мягкий сланец)
+       3. Акцент (Доверие и Рост, 10%): #0D9488 (природный изумрудно-бирюзовый) и #ECFDF5 (мятный воздух)
+       ========================================================================== */
+    :root {
+      --bg-main: #F4F7F6;
+      --bg-card: #FFFFFF;
+      --bg-soft: #ECFDF5;
+      --border-soft: #E2E8F0;
+      --border-accent: #99F6E4;
+      --text-main: #1E293B;
+      --text-muted: #64748B;
+      --accent: #0D9488;
+      --accent-hover: #0F766E;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: max(30px, env(safe-area-inset-bottom));
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 0 16px;
+      padding-top: max(8px, env(safe-area-inset-top));
+    }
+
+    /* Шапка сайта (без тяжелых blur-фильтров для моментальной прокрутки) */
+    .topbar {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border-soft);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      padding: 10px 0;
+      box-shadow: 0 1px 3px rgba(30, 41, 59, 0.04);
+    }
+    .topbar-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border-accent);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+    .brand-title span {
+      color: var(--accent);
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Карточки */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      padding: 24px;
+      margin-top: 20px;
+      box-shadow: 0 4px 20px -4px rgba(30, 41, 59, 0.04);
+    }
+    .card-accent {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-accent);
+      border-radius: 22px;
+      padding: 28px 24px;
+      margin-top: 24px;
+      box-shadow: 0 10px 30px -10px rgba(13, 148, 136, 0.08);
+    }
+
+    /* Типографика и бейджи */
+    .badge {
+      display: inline-block;
+      background: var(--bg-soft);
+      color: var(--accent);
+      border: 1px solid var(--border-accent);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-main);
+      color: var(--text-main);
+      border: 1px solid var(--border-soft);
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    h1 {
+      font-size: clamp(22px, 4vw, 30px);
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+      margin: 10px 0 8px;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+    h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 12px;
+    }
+    .muted {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Форма и кнопки */
+    .search-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .input {
+      flex: 1 1 260px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1.5px solid var(--border-soft);
+      background: var(--bg-main);
+      color: var(--text-main);
+      font-size: 16px; /* 16px предотвращает принудительный зум на iPhone */
+      font-weight: 500;
+      outline: none;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .input:focus {
+      border-color: var(--accent);
+      background: var(--bg-card);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+    .btn-soft {
+      background: var(--bg-soft);
+      color: var(--accent);
+      border: 1px solid var(--border-accent);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .btn-soft:hover {
+      background: #CCFBF1;
+    }
+    .btn-outline {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Внутренние блоки и сетки */
+    .subbox {
+      background: var(--bg-main);
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .subbox-mint {
+      background: var(--bg-soft);
+      border: 1px solid var(--border-accent);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .list-clean {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .list-clean li {
+      background: var(--bg-main);
+      border: 1px solid var(--border-soft);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    /* Прогресс-бар */
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: var(--border-soft);
+      border-radius: 99px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.25s ease;
+    }
+
+    /* Модальные окна */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 41, 59, 0.45);
+      backdrop-filter: blur(4px);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 24px;
+      max-width: 440px;
+      width: 100%;
+      padding: 28px 24px;
+      text-align: center;
+      box-shadow: 0 20px 40px -15px rgba(30, 41, 59, 0.18);
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 640px) {
+      .container { padding: 0 12px; }
+      .card { padding: 18px 14px; border-radius: 16px; margin-top: 14px; }
+      .card-accent { padding: 20px 14px; border-radius: 18px; margin-top: 14px; }
+      h1 { font-size: 22px; }
+      .search-row { flex-direction: column; }
+      .search-row .btn-primary { width: 100%; padding: 14px; }
+      .topbar-inner { gap: 8px; }
+    }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #FFFFFF; }
+      .card, .card-accent { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+  <header class="topbar no-print">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <div class="brand-logo">TP</div>
+        <div>
+          <div class="brand-title">TargetPro <span>AI</span></div>
+          <div class="brand-sub">ИИ-разбор Instagram • SMM • Таргет • by @imamaliev.ads</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="printBtn" onclick="downloadReportPdf(this)" class="btn-soft hidden">📄 Скачать PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ГЛАВНЫЙ БЛОК ВВОДА ССЫЛКИ -->
+    <section class="card-accent no-print" style="text-align:center;">
+      <span class="badge">Быстрый и лёгкий ИИ-анализ в 1 клик</span>
+      <h1>Вставьте ссылку на Instagram-аккаунт</h1>
+      <p class="muted" style="max-width:620px; margin:0 auto;">
+        Система сама прочитает профиль и публикации, определит точную сферу и локацию бизнеса и составит понятный план от SMM-специалиста, маркетолога и таргетолога.
+      </p>
+
+      <form onsubmit="startAutoInitialization(event)" style="max-width:680px; margin:0 auto;">
+        <div class="search-row">
+          <input id="instaInput" type="text" required class="input"
+            placeholder="Ссылка на Instagram или @никнейм (напр. @dodopizzakz)" />
+          <button id="scanBtn" type="submit" class="btn-primary">
+            Начать разбор
+          </button>
+        </div>
+      </form>
+
+      <!-- Блок хода анализа -->
+      <div id="scanProgressBox" class="subbox hidden" style="max-width:680px; margin:18px auto 0; text-align:left;">
+        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700;">
+          <span id="scanStatusTitle" style="color:var(--accent);">Подключаемся к профилю...</span>
+          <span id="scanPercent">15%</span>
+        </div>
+        <div class="progress-track">
+          <div id="scanBar" class="progress-fill" style="width:15%"></div>
+        </div>
+        <div id="scanLog" class="muted" style="font-size:12px; display:flex; flex-direction:column; gap:4px;"></div>
+      </div>
+    </section>
+
+    <!-- РЕЗУЛЬТАТЫ РАЗБОРА -->
+    <div id="resultSection"></div>
+
+  </main>
+
+  <!-- ОКНО ПОДПИСКИ НА TELEGRAM И INSTAGRAM -->
+  <div id="tgGateOverlay" class="modal-backdrop no-print">
+    <div class="modal-card">
+      <div class="brand-logo" style="margin:0 auto 14px; width:52px; height:52px; font-size:22px;">🔒</div>
+      <span class="badge">Бесплатный доступ</span>
+      <h2 style="margin-top:10px;">Подпишитесь для доступа</h2>
+      <p class="muted" style="margin-top:8px;">
+        Доступ к бесплатному ИИ-сканеру Instagram открыт для подписчиков наших каналов:
+      </p>
+
+      <div class="subbox" style="margin:16px 0; display:flex; flex-direction:column; gap:8px; text-align:left; font-size:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span>📢 Telegram:</span>
+          <strong style="color:var(--accent);">@imamaliev_ai</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span>📸 Instagram:</span>
+          <strong style="color:var(--accent);">@imamaliev.ads</strong>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <a id="gateSubLinkBtn" href="https://t.me/imamaliev_ai" target="_blank" onclick="onSubLinkClicked()" class="btn-primary" style="width:100%;">
+          1. Подписаться на Telegram @imamaliev_ai
+        </a>
+        <a id="gateInstaLinkBtn" href="https://instagram.com/imamaliev.ads" target="_blank" onclick="onInstaLinkClicked()" class="btn-primary" style="width:100%; background:var(--accent-hover);">
+          2. Подписаться на Instagram @imamaliev.ads
+        </a>
+        <button id="verifySubBtn" type="button" onclick="verifyChannelSubscription()" class="btn-soft" style="width:100%; padding:13px;">
+          3. Я подписался — Открыть сканер
+        </button>
+      </div>
+
+      <p id="gateStatusMsg" class="muted hidden" style="margin-top:12px; font-weight:600; color:var(--accent);"></p>
+    </div>
+  </div>
+
+  <script>
+    function addScanLog(msg) {
+      const log = document.getElementById('scanLog');
+      const div = document.createElement('div');
+      div.textContent = msg;
+      log.appendChild(div);
+    }
+
+    function setProgress(pct, title) {
+      document.getElementById('scanPercent').textContent = pct + '%';
+      document.getElementById('scanBar').style.width = pct + '%';
+      if (title) {
+        document.getElementById('scanStatusTitle').textContent = title;
+      }
+    }
+
+    async function fetchRealInstagramData(rawInput) {
+      try {
+        const apiBase = window.location.protocol.startsWith('http') ? '' : 'http://localhost:8765';
+        const res = await fetch(`${apiBase}/api/insta?handle=${encodeURIComponent(rawInput)}`);
+        if (!res.ok) throw new Error('API unreachable');
+        const json = await res.json();
+
+        let fullName = '';
+        let username = json.handle || '';
+        let followers = null;
+        let postsCount = null;
+        let postCaptions = [];
+        let videoCount = 0;
+
+        if (json.contextRaw) {
+          try {
+            const parsed = JSON.parse(json.contextRaw);
+            const ctx = parsed.context || {};
+            fullName = ctx.full_name || '';
+            username = ctx.username || username;
+            followers = typeof ctx.followers_count === 'number' ? ctx.followers_count : null;
+            postsCount = typeof ctx.posts_count === 'number' ? ctx.posts_count : null;
+
+            const mediaArr = ctx.graphql_media || [];
+            for (const item of mediaArr) {
+              const sm = item.shortcode_media || {};
+              if (sm.is_video) videoCount++;
+              const edges = sm.edge_media_to_caption?.edges || [];
+              if (edges.length > 0 && edges[0].node?.text) {
+                postCaptions.push(edges[0].node.text);
+              }
+            }
+          } catch (e) {}
+        }
+
+        return {
+          ok: true,
+          handle: username,
+          fullName: fullName,
+          ogTitle: json.ogTitle || '',
+          ogDescription: json.ogDescription || '',
+          followers,
+          postsCount,
+          postCaptions,
+          videoCount
+        };
+      } catch (err) {
+        let s = (rawInput || '').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').split(/[/?#]/)[0].replace(/^@/, '');
+        return {
+          ok: false,
+          handle: s || 'profile',
+          fullName: '',
+          ogTitle: '',
+          ogDescription: '',
+          followers: null,
+          postsCount: null,
+          postCaptions: [],
+          videoCount: 0
+        };
+      }
+    }
+
+    // База локаций и ориентиров Шымкента
+    const SHYMKENT_LOCATIONS = [
+      { rx: /нурсат|nursat/i, label: "мкр. Нурсат" },
+      { rx: /сайрам|sairam|sayram/i, label: "ж/м Сайрам" },
+      { rx: /катынкопр|қатын\s*көпір|катын-копр/i, label: "р-н Катынкопр" },
+      { rx: /асар|asar/i, label: "мкр. Асар" },
+      { rx: /туран|turan|тұран/i, label: "мкр. Туран" },
+      { rx: /самал[\s-]*[123]?|samal/i, label: "мкр. Самал" },
+      { rx: /кайтпас|қайтпас|kaitpas/i, label: "мкр. Кайтпас" },
+      { rx: /бозарык|бозарық/i, label: "мкр. Бозарык" },
+      { rx: /тассай|tassay/i, label: "ж/м Тассай" },
+      { rx: /забадам|zabadam/i, label: "р-н Забадам" },
+      { rx: /север\b|sever/i, label: "мкр. Север" },
+      { rx: /восток\b|vostok/i, label: "мкр. Восток" },
+      { rx: /18[\s-]*мкр|18[\s-]*шағын/i, label: "18-й микрорайон" },
+      { rx: /17[\s-]*мкр|17[\s-]*шағын/i, label: "17-й микрорайон" },
+      { rx: /16[\s-]*мкр|16[\s-]*шағын/i, label: "16-й микрорайон" },
+      { rx: /11[\s-]*мкр|11[\s-]*шағын/i, label: "11-й микрорайон" },
+      { rx: /8[\s-]*мкр|8[\s-]*шағын/i, label: "8-й микрорайон" },
+      { rx: /старый город|ескі қала/i, label: "Старый город" },
+      { rx: /тауке\s*хан|тәуке\s*хан|tauke\s*khan/i, label: "пр. Тауке хана" },
+      { rx: /кунаев|қонаев|kunaev|konayev/i, label: "пр. Кунаева" },
+      { rx: /рыскулов|рысқұлов|ryskulov/i, label: "ул. Рыскулова" },
+      { rx: /байдибек\s*би|бәйдібек\s*би|baidibek/i, label: "пр. Байдибек би" },
+      { rx: /казыбек\s*би|қазыбек\s*би|kazybek/i, label: "ул. Казыбек би" },
+      { rx: /момышулы|момышұлы|momyshuly/i, label: "пр. Б. Момышулы" },
+      { rx: /еримбетов|ерімбетов|erimbetov/i, label: "ул. Еримбетова" },
+      { rx: /иляев|іляев|ilyaev/i, label: "ул. Иляева" },
+      { rx: /мадели\s*кожа|мәделі\s*қожа|madeli/i, label: "ул. Мадели Кожа" },
+      { rx: /желтоксан|желтоқсан|zheltoksan/i, label: "ул. Желтоксан" },
+      { rx: /туркестанск|түркістан\s*көш/i, label: "ул. Туркестанская" },
+      { rx: /тыныбаев|арбат\s*шымкент|шымкент.*арбат/i, label: "Арбат (ул. Тыныбаева)" },
+      { rx: /жангельдин|жангелдин/i, label: "ул. Жангельдина" },
+      { rx: /байтурсынов|байтұрсынов|baitursynov/i, label: "ул. Байтурсынова" },
+      { rx: /республик.*пр|пр.*республик/i, label: "пр. Республики" },
+      { rx: /аскаров|асқаров/i, label: "ул. Аскарова" },
+      { rx: /уалиханов|уәлиханов/i, label: "ул. Уалиханова" },
+      { rx: /калдаяков|қалдаяқов/i, label: "ул. Калдаякова" },
+      { rx: /темирлан|тамерлан.*шоссе|темiрлан/i, label: "Темирланское шоссе" },
+      { rx: /shymkent\s*plaza|шымкент\s*плаза/i, label: "ТРЦ Shymkent Plaza" },
+      { rx: /mega\s*planet|мега\s*планет/i, label: "ТРЦ Mega Planet" },
+      { rx: /гиперхаус|hyper\s*house/i, label: "р-н Гиперхаус" },
+      { rx: /рахима\s*плаза|rahima\s*plaza/i, label: "ТРЦ Рахима Плаза" },
+      { rx: /колос\b|kolos/i, label: "р-н Колос" },
+      { rx: /верхний\s*рынок|жоғарғы\s*базар/i, label: "Верхний рынок" },
+      { rx: /автонур|автөнұр|avtonur/i, label: "рынок Автонур" },
+      { rx: /бекжан|bekzhan/i, label: "рынок Бекжан" },
+      { rx: /алаш\s*базар|рынок\s*алаш/i, label: "рынок Алаш" },
+      { rx: /дендропарк/i, label: "р-н Дендропарка" },
+      { rx: /тулпар.*озер|көл.*тұлпар/i, label: "озеро Тулпар" },
+      { rx: /jeti\s*tandir|жети\s*тандыр|жеті\s*тандыр/i, label: "Jeti Tandir" }
+    ];
+
+    function detectLocationAndHours(text) {
+      const t = (text || '');
+      const tLow = t.toLowerCase();
+      let shymkentSpots = [];
+      for (const loc of SHYMKENT_LOCATIONS) {
+        if (loc.rx.test(t)) shymkentSpots.push(loc.label);
+      }
+
+      if (shymkentSpots.length > 0 || /shymkent|шымкент|chimkent|чимкент|13\s*region|17\s*region|\bshym\b/i.test(tLow)) {
+        const subLoc = shymkentSpots.length > 0 ? ` (${shymkentSpots.slice(0, 2).join(', ')})` : '';
+        return { city: `Шымкент${subLoc}`, isShymkent: true, spots: shymkentSpots, hours: extractWorkingHours(t) };
+      }
+
+      const cities = [
+        { rx: /almaty|алмат/i, name: "Алматы" },
+        { rx: /astana|астан|нур-султан/i, name: "Астана" },
+        { rx: /tashkent|ташкент|toshkent/i, name: "Ташкент" },
+        { rx: /turkestan|туркестан|түркістан/i, name: "Туркестан" },
+        { rx: /taraz|тараз/i, name: "Тараз" },
+        { rx: /kyzylorda|кызылорда|қызылорда/i, name: "Кызылорда" },
+        { rx: /bishkek|бишкек/i, name: "Бишкек" },
+        { rx: /karagand|караганд|қарағанды/i, name: "Караганда" },
+        { rx: /aktobe|актобе|ақтөбе/i, name: "Актобе" },
+        { rx: /atyrau|атырау/i, name: "Атырау" },
+        { rx: /aktau|актау|ақтау/i, name: "Актау" }
+      ];
+      for (const c of cities) {
+        if (c.rx.test(tLow)) return { city: c.name, isShymkent: false, spots: [], hours: extractWorkingHours(t) };
+      }
+
+      return { city: "Шымкент / Ваш город", isShymkent: false, spots: [], hours: extractWorkingHours(t) };
+    }
+
+    function extractWorkingHours(text) {
+      const m = text.match(/\b([012]?\d:[0-5]\d)\s*[-–—доto]+\s*([012]?\d:[0-5]\d)\b/i);
+      if (m) return `${m[1]} – ${m[2]}`;
+      const m2 = text.match(/с\s*(\d{1,2})\s*(?:утра|часов|:00)?\s*до\s*(\d{1,2})\s*(?:вечера|ночи|часов|:00)?/i);
+      if (m2) return `${m2[1]}:00 – ${m2[2]}:00`;
+      if (/24\/7|круглосуточн/i.test(text)) return "24/7";
+      return null;
+    }
+
+    function classifyInstagramNiche(profileData, customOverride = null) {
+      const headerText = `${profileData.handle} ${profileData.fullName} ${profileData.ogTitle} ${profileData.ogDescription}`.toLowerCase();
+      const postsText = (profileData.postCaptions || []).join(' \n ').toLowerCase();
+      const allText = `${headerText} \n ${postsText}`;
+
+      const locInfo = detectLocationAndHours(`${profileData.handle} ${profileData.fullName} ${(profileData.postCaptions || []).join(' ')}`);
+      const detectedCity = (customOverride && customOverride.geo) ? customOverride.geo : locInfo.city;
+
+      if (customOverride && customOverride.nicheKey && window.NICHES_DB[customOverride.nicheKey]) {
+        return {
+          matchedKey: customOverride.nicheKey,
+          detectedCity,
+          workingHours: locInfo.hours,
+          shymkentSpots: locInfo.spots,
+          matchedKeywords: ['Выбрано вручную']
+        };
+      }
+
+      const NICHE_RULES = [
+        { key: 'doner_lavash', terms: ['лаваш', 'lavash', 'донер', 'doner', 'döner', 'шаурм', 'shaurma', 'лаваш центр', 'lavash center', 'говяжий лаваш', 'сырный лаваш', 'хот-дог', 'вертел', 'айран'] },
+        { key: 'shashlyk_spot', terms: ['шашлычн', 'шашлык', 'shashlyk', 'кәуап', 'кауап', 'люля', 'молотый шашлык', 'гиждуван', 'орама-жигар', 'жигар', 'печень в сетке', 'мякоть', 'бараньи ребрышки', 'на саксауле', 'на углях', 'мангал', 'шампур', 'палочка шашлыка', 'сет шашлык', 'жареная рыба', 'сазан'] },
+        { key: 'chaikhana', terms: ['чайхан', 'шайхан', 'chaihona', 'chayhana', 'топчан', 'тапчан', 'плов', 'палау', 'казан', 'тандыр', 'самса', 'jeti tandir', 'жети тандыр', 'жеті тандыр', 'шурпа', 'сорпа', 'казан-кебаб', 'бешбармак', 'дастархан', 'восточная кухня'] },
+        { key: 'ashana_dining', terms: ['асхана', 'ashana', 'столовая', 'домашняя кухня', 'комплексный обед', 'лагман', 'гуйру', 'цомян', 'манты', 'пельмен', 'кулинария', 'раздача', 'с 11:00 до 21:00', '11:00-21:00'] },
+        { key: 'cafe', terms: ['кофейн', 'coffee', 'капучино', 'латте', 'эспрессо', 'раф', 'бариста', 'круассан', 'завтрак весь день', 'пашот', 'сырник', 'вафл'] },
+        { key: 'restaurant', terms: ['ресторан', 'restaurant', 'банкет', 'банкетный зал', 'тойхана', 'стейк', 'steak', 'лаундж', 'lounge', 'живая музыка', 'караоке', 'vip-кабинк', 'шоу-программа', 'кудалык', 'құдалық', 'мейрамхана'] },
+        { key: 'food_delivery', terms: ['доставка суши', 'суши', 'роллы', 'пицц', 'pizza', 'sushi', 'бургер', 'burger', 'филадельфия', 'пепперони', 'додо', 'dodo', 'пиццерия'] },
+        { key: 'auto_glass', terms: ['автостекл', 'автостёкл', 'лобово', 'лобовые', 'лобовых', 'замена стекл', 'замена стёкл', 'ремонт сколов', 'ремонт трещин', 'панорамн', 'боковое стекло', 'боковых стекол', 'заднее стекло', 'задних стекол', 'вклейка стекл', 'xyg', 'fuyao', 'agc', 'saint-gobain', 'pilkington', 'avtostekl', 'autostekl', 'autoglass', 'ветровое стекло', 'триплекс', 'стекла на авто', 'стёкла на авто', 'автоәйнек'] },
+        { key: 'detailing', terms: ['detail', 'детейл', 'полировк', 'polirov', 'бронепленк', 'бронеплёнк', 'ppf', 'керамик', 'химчистк', 'антидождь', 'антихром', 'шумоизоляц', 'оклейк', 'лкп', 'автомойк', 'carwash', 'llumar'] },
+        { key: 'car_import', terms: ['пригон', 'авто из кита', 'авто из коре', 'авто из сша', 'авто из груз', 'авто на заказ', 'авто под заказ', 'заказ авто', 'растаможк', 'аукцион', 'encar', 'copart', 'инвойс', 'утильсбор', 'автовоз', 'lixiang', 'лисян', 'zeekr', 'зикр', 'monjaro', 'byd'] },
+        { key: 'car_dealership', terms: ['автосалон', 'autosalon', 'avtosalon', 'trade-in', 'трейд-ин', 'автокредит', 'авто с пробегом', 'выкуп авто', 'авто в наличии', 'первоначальн', 'тест-драйв', 'дилер', 'motors'] },
+        { key: 'womens_clothing', terms: ['женская одежда', 'шоурум', 'showroom', 'плать', 'платье', 'юбк', 'блуз', 'жакет', 'женский костюм', 'капсул', 'размеры s', 'стилист', 'женский образ', 'бутик', 'boutique', 'dress', 'fashion', 'новая коллекция', 'примерк', 'трикотаж', 'кардиган', 'әйелдер киімі', 'көйлек'] },
+        { key: 'mens_clothing', terms: ['мужская одежда', 'мужской костюм', 'menswear', 'мужская обувь', 'рубашк', 'сорочк', 'пиджак', 'брюки муж', 'поло', 'лофер', 'мужской стиль', 'ерлер киімі'] },
+        { key: 'hardware_store', terms: ['стройматериал', 'строительный магазин', 'стройбаза', 'stroy', 'цемент', 'гипсокартон', 'шпаклевк', 'штукатурк', 'краск', 'плитк', 'керамогранит', 'ламинат', 'обои', 'сантехник', 'инструмент', 'кровл', 'кирпич', 'газоблок', 'двери', 'окна', 'все для ремонта', 'құрылыс'] },
+        { key: 'furniture', terms: ['мебел', 'mebel', 'кухни на заказ', 'кухня на заказ', 'кухонный гарнитур', 'шкаф-купе', 'шкафы на заказ', 'гардеробн', 'диван', 'кроват', 'матрас', 'стол', 'стулья', 'лдсп', 'мдф', 'blum', 'жиһаз'] },
+        { key: 'appliances', terms: ['бытовая техника', 'электроник', 'холодильник', 'стиральная машин', 'телевизор', 'пылесос', 'духовой шкаф', 'варочная панел', 'кондиционер', 'техника для дома', 'тұрмыстық техника'] },
+        { key: 'flower_shop', terms: ['цветы', 'цветочный', 'букет', 'flower', 'flora', 'розы', 'пионы', 'тюльпан', 'флорист', 'доставка цветов', 'гүлдер'] },
+        { key: 'bakery', terms: ['кондитер', 'торт', 'торты на заказ', 'бенто', 'bento', 'cake', 'капкейк', 'чизкейк', 'трайфл', 'детский торт', 'начинк', 'бисквит', 'тәтті'] },
+        { key: 'dental', terms: ['стоматолог', 'зуб', 'имплант', 'винир', 'брекет', 'элайнер', 'кариес', 'протезирован', 'чистка зубов', 'ортодонт', '3d снимок', 'лечение зубов', 'dent', 'stom', 'тіс емдеу'] },
+        { key: 'beauty_salon', terms: ['салон красоты', 'маникюр', 'педикюр', 'гель-лак', 'ресниц', 'брови', 'ламинирован', 'окрашивание волос', 'стрижк', 'кератин', 'косметолог', 'чистка лица', 'шугаринг', 'лазерная эпиляция', 'beauty', 'сұлулық салоны'] },
+        { key: 'real_estate', terms: ['недвижимост', 'новостройк', 'жилой комплекс', 'жк ', 'квартир', 'ипотек', 'застройщик', 'риелтор', 'планировк', 'коттедж', 'пәтер', 'баспана'] },
+        { key: 'education', terms: ['курсы', 'обучен', 'школа', 'урок', 'преподавател', 'репетитор', 'английск', 'ielts', 'ент', 'подготовка к школе', 'онлайн-школ', 'пробный урок', 'оқу орталығы'] },
+        { key: 'travel', terms: ['турагентств', 'турфирм', 'горящие туры', 'путевк', 'путёвк', 'отель 5', 'все включено', 'all inclusive', 'отдых в турции', 'египет', 'дубай', 'вьетнам', 'travel', 'саяхат'] },
+        { key: 'b2b_flour', terms: ['мука', 'мукомольн', 'пшениц', 'зерн', 'отруби', 'клейковин', 'элеватор', 'комбикорм', 'мешок 50', 'оптом от', 'вагон', 'завод-производител', 'ұн', 'бидай'] }
+      ];
+
+      let bestKey = null;
+      let bestScore = 0;
+      let bestMatchedWords = [];
+
+      for (const rule of NICHE_RULES) {
+        let score = 0;
+        let matched = [];
+        for (const term of rule.terms) {
+          if (headerText.includes(term)) {
+            score += 5;
+            matched.push(term);
+          } else if (postsText.includes(term)) {
+            score += 2;
+            matched.push(term);
+          }
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          bestKey = rule.key;
+          bestMatchedWords = matched.slice(0, 5);
+        }
+      }
+
+      if ((bestKey === 'cafe' || !bestKey) && /11:00|с 11\b/.test(allText) && /кафе|еда|кухня|обед|ужин|шашлык|плов|лагман|манты|самса/i.test(allText)) {
+        bestKey = /плов|топчан|самса|тандыр|чайхан/i.test(allText) ? 'chaikhana' : 'ashana_dining';
+        bestScore = Math.max(bestScore, 6);
+        bestMatchedWords.push('График с 11:00');
+      }
+
+      if (bestKey && bestScore >= 2) {
+        return {
+          matchedKey: bestKey,
+          detectedCity,
+          workingHours: locInfo.hours,
+          shymkentSpots: locInfo.spots,
+          matchedKeywords: bestMatchedWords
+        };
+      }
+
+      return {
+        matchedKey: null,
+        detectedCity,
+        workingHours: locInfo.hours,
+        shymkentSpots: locInfo.spots,
+        matchedKeywords: []
+      };
+    }
+
+    let lastScannedProfile = null;
+
+    async function startAutoInitialization(e, customOverride = null) {
+      if (e) e.preventDefault();
+      const rawInput = document.getElementById('instaInput').value.trim();
+      if (!rawInput) return;
+
+      const box = document.getElementById('scanProgressBox');
+      const log = document.getElementById('scanLog');
+      box.classList.remove('hidden');
+      log.innerHTML = '';
+
+      if (!window.NICHES_DB || !window.SMM_DIGITAL_DB) {
+        setProgress(15, 'Загружаем экспертную базу...');
+        let waitCount = 0;
+        while ((!window.NICHES_DB || !window.SMM_DIGITAL_DB) && waitCount < 40) {
+          await new Promise(r => setTimeout(r, 50));
+          waitCount++;
+        }
+      }
+
+      setProgress(25, 'Считываем данные Instagram-аккаунта...');
+      const profileData = (customOverride && lastScannedProfile) ? lastScannedProfile : await fetchRealInstagramData(rawInput);
+      lastScannedProfile = profileData;
+
+      setProgress(65, 'Определяем нишу, график работы и локацию...');
+      if (profileData.fullName) {
+        addScanLog(`Профиль: ${profileData.fullName} (@${profileData.handle})`);
+      } else {
+        addScanLog(`Профиль: @${profileData.handle}`);
+      }
+
+      const classification = classifyInstagramNiche(profileData, customOverride);
+      let targetData;
+      let nicheKeyForSmm;
+
+      if (classification.matchedKey && window.NICHES_DB[classification.matchedKey]) {
+        nicheKeyForSmm = classification.matchedKey;
+        targetData = JSON.parse(JSON.stringify(window.NICHES_DB[classification.matchedKey]));
+        if (classification.detectedCity) targetData.geo = classification.detectedCity;
+      } else {
+        const fallbackTitle = profileData.fullName || `Проект @${profileData.handle}`;
+        nicheKeyForSmm = 'custom_dynamic';
+        targetData = buildDynamicCustomNiche(fallbackTitle, classification.detectedCity, "$15 – $300", profileData.handle);
+      }
+
+      const combinedText = `${profileData.fullName} ${profileData.postCaptions.join(' ')}`.toLowerCase();
+      const autoCheckBoxes = {
+        hasSeoBio: profileData.fullName.length > 5 && !(/^[a-z0-9._]+$/i.test(profileData.fullName)),
+        hasLink: /wa\.me|taplink|t\.me|http|ссылк|2gis|2гис|direct|директ/i.test(combinedText),
+        hasPrices: /цен|прайс|стоимост|от\s*\d|\$|₸|тг|сум/i.test(combinedText),
+        hasReels: profileData.videoCount >= 2 || profileData.postCaptions.length >= 3
+      };
+
+      const smmDigital = window.getSmmDigitalAdvice(nicheKeyForSmm, targetData, profileData.handle, autoCheckBoxes);
+      smmDigital.realProfile = profileData;
+      smmDigital.classification = classification;
+
+      if (classification.shymkentSpots && classification.shymkentSpots.length > 0) {
+        smmDigital.seoName = `${(targetData.shortName || '').toUpperCase()} • ШЫМКЕНТ (${classification.shymkentSpots[0].toUpperCase()})`;
+        smmDigital.digitalBudget += ` Гео-фокус по Шымкенту: ${classification.shymkentSpots.join(', ')} (+ радиус 2–4 км).`;
+      }
+      if (classification.workingHours) {
+        smmDigital.digitalBudget += ` Расписание рекламы: строго под график работы (${classification.workingHours}).`;
+      }
+
+      setProgress(100, `Готово: ${targetData.shortName}`);
+      renderCompleteReport(targetData, smmDigital, profileData.handle, nicheKeyForSmm);
+
+      document.getElementById('printBtn').classList.remove('hidden');
+      document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function buildDynamicCustomNiche(nicheName, geo, check, handle) {
+      return {
+        icon: "✨",
+        shortName: nicheName,
+        niche: nicheName,
+        geo: geo,
+        check: check,
+        usp: "Гарантия качества, понятный прайс и быстрый расчёт в WhatsApp",
+        diagnosis: `Для аккаунта @${handle} («${nicheName}», ${geo}) важно упаковать шапку профиля с конкретной выгодой и переводить трафик из Reels в WhatsApp/Direct через быстрый расчёт цены или подарок к первому заказу.`,
+        badOffer: `«${nicheName} в ${geo}. Высокое качество, пишите в Директ!»`,
+        killerOffer: `«Узнайте точную стоимость и условия по «${nicheName}» в ${geo} за 1 минуту в WhatsApp + заберите бонус к первому заказу!»`,
+        funnelSteps: [
+          `Короткий Reels (15–20 сек) с наглядным обзором и озвучкой цен`,
+          `Переход клиента в WhatsApp в 1 клик (Предзаказ / Бронь / Расчёт)`,
+          `Ответ по скрипту за 3 минуты с отправкой прайса и геолокации 2ГИС`
+        ],
+        segments: [
+          {
+            name: "1. Клиенты рядом с вами и горячий спрос по городу",
+            who: `Ищут «${nicheName}» в ${geo} и хотят заранее видеть честные цены и живые обзоры.`,
+            fear: "Скрытые доплаты, долгое ожидание и несоответствие ожиданиям.",
+            trigger: "Открытый прайс + живое видео продукта + быстрый ответ в WhatsApp."
+          }
+        ],
+        hooks: [
+          {
+            type: "Наглядный обзор и честная цена за 15 секунд",
+            visual: "Крупный план вашего продукта или процесса работы в динамике",
+            onScreenText: `Где в ${geo} найти ${nicheName.toLowerCase()} с честными ценами?`,
+            spokenLine: `Показываю за 15 секунд наше качество и актуальные цены на сегодня...`
+          }
+        ],
+        scripts: [
+          {
+            title: "Сценарий Reels: «Живой обзор ➔ Выгода ➔ Заказ в WhatsApp»",
+            segment: "Жители города " + geo,
+            steps: [
+              { time: "0–3 сек (ХУК)", action: `[Крупный план продукта]. Голос: «Ищете ${nicheName.toLowerCase()} в ${geo}? Смотрите, что мы подготовили для вас!»` },
+              { time: "3–12 сек (ЦЕННОСТЬ)", action: `[Динамичные кадры процесса и цен]. Голос: «Честные цены, свежее качество и быстрый сервис без ожидания».` },
+              { time: "12–20 сек (ПРИЗЫВ)", action: `[Указатель на кнопку под видео]. Голос: «Нажмите кнопку под видео, чтобы получить прайс и оформить заказ в WhatsApp с бонусом!»` }
+            ],
+            bannerBrief: `БАННЕР: Живое фото вашего продукта. Сверху плашка: «📍 ${geo}». Заголовок: «${nicheName} — прайс и заказ за 1 минуту». Кнопка: «Написать в WhatsApp».`
+          }
+        ]
+      };
+    }
+
+    function renderCompleteReport(data, smm, handle, activeNicheKey) {
+      const fullBioText = `${smm.seoName}\n${smm.bioLines.join('\n')}`;
+      const rp = smm.realProfile || {};
+      const cls = smm.classification || {};
+
+      const allNicheOptions = Object.keys(window.NICHES_DB).map(k => {
+        const item = window.NICHES_DB[k];
+        const sel = (k === activeNicheKey) ? 'selected' : '';
+        return `<option value="${k}" ${sel}>${item.icon} ${item.shortName} (${item.category})</option>`;
+      }).join('');
+
+      const container = document.getElementById('resultSection');
+      container.innerHTML = `
+        <!-- СВОДКА ПРОФИЛЯ -->
+        <div class="card">
+          <div class="section-head">
+            <div>
+              <span class="badge">Формат проекта: ${escapeHtml(data.shortName)}</span>
+              <h2 style="margin-top:8px;">${data.icon || ''} ${escapeHtml(rp.fullName || '@' + handle)}</h2>
+              <p class="muted" style="margin-top:2px;">${escapeHtml(data.niche)}</p>
+            </div>
+              <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+                <div class="subbox-mint" style="text-align:center; min-width:140px;">
+                  <div class="muted" style="font-size:11px; font-weight:700; text-transform:uppercase;">Готовность</div>
+                  <div style="font-size:26px; font-weight:800; color:var(--accent);">${smm.score}%</div>
+                </div>
+                <button onclick="downloadReportPdf(this)" class="btn-primary no-print" style="padding:10px 16px; font-size:13px;">
+                  📄 Скачать разбор в PDF (или в ТГ)
+                </button>
+              </div>
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
+            <a href="https://instagram.com/${encodeURIComponent(handle)}" target="_blank" class="tag">📸 @${escapeHtml(handle)} ↗</a>
+            ${rp.followers !== null && rp.followers !== undefined ? `<span class="tag">👥 Подписчиков: ${rp.followers.toLocaleString('ru-RU')}</span>` : ''}
+            <span class="tag">📍 ${escapeHtml(data.geo)}</span>
+            ${cls.workingHours ? `<span class="tag">🕚 График: ${escapeHtml(cls.workingHours)}</span>` : ''}
+            <span class="tag">💰 Средний чек: ${escapeHtml(data.check)}</span>
+          </div>
+
+          ${(cls.matchedKeywords && cls.matchedKeywords.length > 0) || (cls.shymkentSpots && cls.shymkentSpots.length > 0) ? `
+            <div class="subbox" style="margin-bottom:16px; font-size:13px;">
+              <strong>Найдено в контенте профиля:</strong>
+              ${cls.matchedKeywords && cls.matchedKeywords.length > 0 ? ` маркеры (${cls.matchedKeywords.map(w => escapeHtml(w)).join(', ')})` : ''}
+              ${cls.shymkentSpots && cls.shymkentSpots.length > 0 ? ` • локация Шымкента: ${cls.shymkentSpots.map(s => escapeHtml(s)).join(', ')}` : ''}
+            </div>
+          ` : ''}
+
+          <!-- Быстрое переключение формата или города -->
+          <div class="subbox no-print" style="margin-bottom:16px;">
+            <div class="muted" style="font-size:12px; font-weight:700; margin-bottom:8px;">
+              Хотите переключить узкий формат (Чайхана, Шашлычная, Лаваш/Донерная, Асхана 11–21ч и др.) или уточнить улицу?
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <select id="overrideNicheSelect" onchange="triggerOverrideUpdate()" class="input" style="padding:10px 12px; font-size:13px;">
+                <option value="">-- Выберите точный формат бизнеса (24 ниши) --</option>
+                ${allNicheOptions}
+              </select>
+              <input id="overrideGeoInput" type="text" value="${escapeHtml(data.geo)}" placeholder="Город и улица" class="input" style="padding:10px 12px; font-size:13px;" />
+              <button onclick="triggerOverrideUpdate()" class="btn-soft">Обновить разбор</button>
+            </div>
+          </div>
+
+          <div class="subbox">
+            <div style="font-size:13px; font-weight:700; margin-bottom:8px;">Что рекомендуется доработать в профиле перед запуском рекламы:</div>
+            <ul class="list-clean">
+              ${smm.issues.map(iss => `<li>• ${escapeHtml(iss)}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+
+        <!-- 1. СОВЕТЫ SMM-СПЕЦИАЛИСТА -->
+        <div class="card">
+          <div class="section-head">
+            <div>
+              <span class="badge">Эксперт 1 • SMM-Специалист</span>
+              <h2 style="margin-top:6px;">Упаковка профиля и Контент-план («${escapeHtml(data.shortName)}»)</h2>
+            </div>
+            <button onclick="copyText(this, ${JSON.stringify(fullBioText).replace(/"/g, '&quot;')})" class="btn-soft no-print">
+              Скопировать шапку профиля
+            </button>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:16px;">
+            <div class="subbox">
+              <h3>Готовая шапка профиля (BIO)</h3>
+              <div style="background:var(--bg-card); border:1px solid var(--border-soft); border-radius:10px; padding:12px; font-size:14px;">
+                <div style="font-weight:800; color:var(--accent); margin-bottom:4px;">${escapeHtml(smm.seoName)}</div>
+                ${smm.bioLines.map(line => `<div>${escapeHtml(line)}</div>`).join('')}
+              </div>
+            </div>
+
+            <div class="subbox">
+              <h3>5 разделов Актуального (Highlights)</h3>
+              <ul class="list-clean">
+                ${smm.highlights.map(hl => `<li>${escapeHtml(hl)}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:16px;">
+            <div class="subbox">
+              <h3>3 закреплённых поста вверху ленты</h3>
+              <ul class="list-clean">
+                ${smm.pinnedPosts.map(p => `<li>${escapeHtml(p)}</li>`).join('')}
+              </ul>
+            </div>
+
+            <div class="subbox-mint" style="display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <h3>Кодовое слово для Reels (Автоворонка)</h3>
+                <p class="muted" style="margin-bottom:10px;">
+                  Алгоритмы продвигают ролики за комментарии и пересылки в Директ. Добавляйте в конце видео этот призыв:
+                </p>
+                <div style="background:var(--bg-card); border:1px solid var(--border-accent); border-radius:10px; padding:12px; font-weight:700; font-size:14px;">
+                  «${escapeHtml(smm.commentTrigger)}»
+                </div>
+              </div>
+              <button onclick="copyText(this, ${JSON.stringify(smm.commentTrigger).replace(/"/g, '&quot;')})" class="btn-soft no-print" style="align-self:flex-start; margin-top:12px;">
+                Скопировать призыв
+              </button>
+            </div>
+          </div>
+
+          <div class="subbox">
+            <h3>Контент-план на 7 дней (Reels и Stories)</h3>
+            <div class="grid-2">
+              ${smm.contentPlan7Days.map(day => `<div style="background:var(--bg-card); border:1px solid var(--border-soft); padding:10px 12px; border-radius:10px; font-size:13px;">${escapeHtml(day)}</div>`).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. СОВЕТЫ DIGITAL-МАРКЕТОЛОГА -->
+        <div class="card">
+          <div class="section-head">
+            <div>
+              <span class="badge">Эксперт 2 • Digital-Маркетолог</span>
+              <h2 style="margin-top:6px;">Стратегия, Оффер и Скрипт продаж</h2>
+            </div>
+            <button onclick="copyText(this, ${JSON.stringify(data.killerOffer).replace(/"/g, '&quot;')})" class="btn-soft no-print">
+              Скопировать оффер
+            </button>
+          </div>
+
+          <div class="subbox-mint" style="margin-bottom:16px;">
+            <div style="font-size:12px; font-weight:800; color:var(--accent); text-transform:uppercase; margin-bottom:4px;">Маркетинговая стратегия</div>
+            <div style="font-size:14px;">${escapeHtml(data.diagnosis)}</div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:16px;">
+            <div class="subbox">
+              <div class="muted" style="font-size:12px; font-weight:700; margin-bottom:4px;">Слабый оффер (как пишут конкуренты):</div>
+              <div style="font-size:14px;">${escapeHtml(data.badOffer)}</div>
+            </div>
+            <div class="subbox-mint">
+              <div style="font-size:12px; font-weight:800; color:var(--accent); margin-bottom:4px;">Рекомендуемый сильный оффер:</div>
+              <div style="font-size:14px; font-weight:700;">${escapeHtml(data.killerOffer)}</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="subbox">
+              <h3>Бюджет, расписание и воронка</h3>
+              <p style="font-size:14px; margin-bottom:12px;">${escapeHtml(smm.digitalBudget)}</p>
+              <ul class="list-clean">
+                ${data.funnelSteps.map((st, i) => `<li><strong>Шаг ${i + 1}:</strong> ${escapeHtml(st)}</li>`).join('')}
+              </ul>
+            </div>
+
+            <div class="subbox">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0;">Скрипт переписки в Direct / WhatsApp</h3>
+                <button onclick="copyText(this, ${JSON.stringify(smm.salesScript.join('\n\n')).replace(/"/g, '&quot;')})" class="btn-outline no-print">Скопировать</button>
+              </div>
+              <ul class="list-clean">
+                ${smm.salesScript.map(line => `<li>${escapeHtml(line)}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. СВЯЗКИ ТАРГЕТОЛОГА -->
+        <div class="card">
+          <div class="section-head">
+            <div>
+              <span class="badge">Эксперт 3 • Таргетолог</span>
+              <h2 style="margin-top:6px;">Аудитория, 3-сек Хуки и Сценарии Reels</h2>
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:10px;">Платежеспособные сегменты аудитории</h3>
+          <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:22px;">
+            ${data.segments.map(seg => `
+              <div class="subbox">
+                <div style="font-weight:800; font-size:15px; margin-bottom:10px; color:var(--accent);">${escapeHtml(seg.name)}</div>
+                <div class="grid-3" style="font-size:13px;">
+                  <div style="background:var(--bg-card); padding:10px; border-radius:10px; border:1px solid var(--border-soft);">
+                    <strong class="muted" style="display:block; font-size:11px;">КТО ОНИ:</strong>
+                    ${escapeHtml(seg.who || seg.jtbd)}
+                  </div>
+                  <div style="background:var(--bg-card); padding:10px; border-radius:10px; border:1px solid var(--border-soft);">
+                    <strong class="muted" style="display:block; font-size:11px;">ЧЕГО ОПАСАЮТСЯ:</strong>
+                    ${escapeHtml(seg.fear || seg.hiddenFear)}
+                  </div>
+                  <div style="background:var(--bg-card); padding:10px; border-radius:10px; border:1px solid var(--border-soft);">
+                    <strong style="display:block; font-size:11px; color:var(--accent);">ЧЕМ УБЕЖДАЕМ:</strong>
+                    ${escapeHtml(seg.trigger || seg.angle)}
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <h3 style="margin-bottom:10px;">Зацепки на первые 3 секунды (Хуки для Reels)</h3>
+          <div class="grid-2" style="margin-bottom:22px;">
+            ${data.hooks.map(h => `
+              <div class="subbox" style="display:flex; flex-direction:column; justify-content:space-between;">
+                <div style="font-size:13px; display:flex; flex-direction:column; gap:6px;">
+                  <div style="font-weight:800; color:var(--accent);">${escapeHtml(h.type)}</div>
+                  <div><strong>Кадр (0–3 сек):</strong> ${escapeHtml(h.visual)}</div>
+                  <div><strong>Текст на видео:</strong> «${escapeHtml(h.onScreenText)}»</div>
+                  <div><strong>Первая фраза:</strong> «${escapeHtml(h.spokenLine)}»</div>
+                </div>
+                <button onclick="copyText(this, ${JSON.stringify(`КАДР: ${h.visual}\nНАДПИСЬ: ${h.onScreenText}\nГОЛОС: ${h.spokenLine}`).replace(/"/g, '&quot;')})" class="btn-outline no-print" style="align-self:flex-start; margin-top:12px;">
+                  Скопировать хук
+                </button>
+              </div>
+            `).join('')}
+          </div>
+
+          <h3 style="margin-bottom:10px;">Посекундные сценарии Reels и ТЗ на баннеры</h3>
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            ${data.scripts.map(sc => `
+              <div class="subbox">
+                <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px;">
+                  <div>
+                    <div style="font-weight:800; font-size:15px;">${escapeHtml(sc.title)}</div>
+                    <div class="muted" style="font-size:12px;">Аудитория: ${escapeHtml(sc.segment)}</div>
+                  </div>
+                  <button onclick="copyText(this, ${JSON.stringify(sc.title + '\n\n' + sc.steps.map(s => s.time + ': ' + s.action).join('\n') + '\n\n' + sc.bannerBrief).replace(/"/g, '&quot;')})" class="btn-soft no-print">
+                    Скопировать сценарий
+                  </button>
+                </div>
+                <ul class="list-clean" style="margin-bottom:12px;">
+                  ${sc.steps.map(st => `<li style="background:var(--bg-card);"><strong style="color:var(--accent);">${escapeHtml(st.time)}:</strong> ${escapeHtml(st.action)}</li>`).join('')}
+                </ul>
+                <div class="subbox-mint" style="font-size:13px;">
+                  <strong style="color:var(--accent); display:block; margin-bottom:4px;">ТЗ на фото-баннер:</strong>
+                  ${escapeHtml(sc.bannerBrief)}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function triggerOverrideUpdate() {
+      const selKey = document.getElementById('overrideNicheSelect').value;
+      const geoVal = document.getElementById('overrideGeoInput').value.trim();
+      startAutoInitialization(null, { nicheKey: selKey || null, geo: geoVal });
+    }
+
+    async function downloadReportPdf(btn) {
+      const resultEl = document.getElementById('resultSection');
+      if (!resultEl || !resultEl.innerHTML.trim()) return;
+
+      const oldLabel = btn ? btn.innerHTML : '📄 Скачать PDF';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Готовим PDF...';
+      }
+
+      try {
+        const styleCss = document.querySelector('style')?.innerHTML || '';
+        const clone = resultEl.cloneNode(true);
+        clone.querySelectorAll('.no-print').forEach(el => el.remove());
+
+        const handle = (lastScannedProfile && lastScannedProfile.handle) ? lastScannedProfile.handle : 'report';
+        const fullHtml = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>TargetPro AI — @${handle}</title><style>${styleCss} body{background:#FFFFFF;padding:16px;} .card{box-shadow:none;margin-top:14px;}</style></head><body><div class="container">${clone.innerHTML}</div></body></html>`;
+
+        const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || '';
+        const apiBase = window.location.protocol.startsWith('http') ? '' : 'http://localhost:8765';
+
+        const res = await fetch(`${apiBase}/api/export-pdf`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ handle, tgUserId, html: fullHtml })
+        });
+        const data = await res.json();
+
+        if (data && data.ok && data.downloadUrl) {
+          const fullPdfUrl = window.location.origin + data.downloadUrl;
+          if (data.sentToTelegram) {
+            if (btn) btn.innerHTML = '✅ Отправлено в чат бота!';
+            if (window.Telegram?.WebApp?.showAlert) {
+              window.Telegram.WebApp.showAlert('Готово! PDF-файл с разбором отправлен вам прямо в чат бота @targetPro_ai_bot!');
+            }
+          } else if (window.Telegram?.WebApp?.initData) {
+            if (window.Telegram.WebApp.downloadFile) {
+              window.Telegram.WebApp.downloadFile({ url: fullPdfUrl, file_name: data.fileName || 'TargetPro-AI.pdf' });
+            } else if (window.Telegram.WebApp.openLink) {
+              window.Telegram.WebApp.openLink(fullPdfUrl);
+            } else {
+              window.location.href = fullPdfUrl;
+            }
+            if (btn) btn.innerHTML = '✅ PDF готов!';
+          } else {
+            const a = document.createElement('a');
+            a.href = fullPdfUrl;
+            a.download = data.fileName || 'TargetPro-AI.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            if (btn) btn.innerHTML = '✅ Скачано!';
+          }
+        } else {
+          window.print();
+          if (btn) btn.innerHTML = oldLabel;
+        }
+      } catch (e) {
+        window.print();
+        if (btn) btn.innerHTML = oldLabel;
+      }
+
+      setTimeout(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = oldLabel;
+        }
+      }, 3500);
+    }
+
+    function copyText(btn, text) {
+      navigator.clipboard.writeText(text);
+      const old = btn.innerHTML;
+      btn.innerHTML = '✓ Скопировано';
+      setTimeout(() => { btn.innerHTML = old; }, 1400);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Telegram Gate
+    let tgAppConfig = {
+      requireSub: true,
+      channelUsername: "@imamaliev_ai",
+      channelTitle: "TargetPro AI",
+      channelUrl: "https://t.me/imamaliev_ai",
+      hasBotToken: true,
+      publicAppUrl: "https://c8811dfa758293.lhr.life"
+    };
+    let userClickedSubscribeLink = false;
+
+    function initTelegramGate() {
+      if (window.Telegram && window.Telegram.WebApp) {
+        try {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+        } catch(e) {}
+      }
+
+      // Если пользователь открыл WebApp прямо из Telegram-бота, он уже проверен ботом:
+      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      if (tgUser && tgUser.id) {
+        sessionStorage.setItem('TARGETPRO_SUB_UNLOCKED_' + tgAppConfig.channelUsername, '1');
+        return;
+      }
+
+      const isLocalOwner = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      if (!isLocalOwner) {
+        const alreadyUnlocked = sessionStorage.getItem('TARGETPRO_SUB_UNLOCKED_' + tgAppConfig.channelUsername);
+        if (!alreadyUnlocked) showGatePreview();
+      }
+    }
+
+    function updateGateLabels() {
+      document.getElementById('gateChannelName').textContent = tgAppConfig.channelUsername;
+      document.getElementById('gateChannelTitle').textContent = tgAppConfig.channelTitle || tgAppConfig.channelUsername;
+      document.getElementById('gateSubLinkBtn').href = tgAppConfig.channelUrl || ('https://t.me/' + tgAppConfig.channelUsername.replace('@', ''));
+    }
+
+    function showGatePreview() {
+      updateGateLabels();
+      document.getElementById('tgGateOverlay').classList.add('active');
+    }
+
+    let userClickedInstaLink = false;
+
+    function onSubLinkClicked() {
+      userClickedSubscribeLink = true;
+      const msg = document.getElementById('gateStatusMsg');
+      msg.classList.remove('hidden');
+      msg.textContent = 'Отлично! Теперь обязательно подпишитесь на Instagram @imamaliev.ads (кнопка 2) и нажмите «3. Я подписался».';
+    }
+
+    function onInstaLinkClicked() {
+      userClickedInstaLink = true;
+      const msg = document.getElementById('gateStatusMsg');
+      msg.classList.remove('hidden');
+      msg.textContent = 'Супер! Теперь нажмите «3. Я подписался — Открыть сканер» ниже.';
+    }
+
+    async function verifyChannelSubscription() {
+      const msg = document.getElementById('gateStatusMsg');
+      const btn = document.getElementById('verifySubBtn');
+      btn.disabled = true;
+      btn.textContent = 'Проверяем подписку...';
+
+      const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || '';
+      const apiBase = window.location.protocol.startsWith('http') ? '' : 'http://localhost:8765';
+
+      try {
+        if (!tgUserId && !userClickedSubscribeLink) {
+          msg.classList.remove('hidden');
+          msg.textContent = `Сначала нажмите кнопку «1. Подписаться на канал ${tgAppConfig.channelUsername}» выше!`;
+          btn.disabled = false;
+          btn.textContent = '3. Я подписался — Открыть сканер';
+          return;
+        }
+        const res = await fetch(`${apiBase}/api/check-sub?user_id=${encodeURIComponent(tgUserId)}`);
+        const data = await res.json();
+        if (data.subscribed) {
+          sessionStorage.setItem('TARGETPRO_SUB_UNLOCKED_' + tgAppConfig.channelUsername, '1');
+          document.getElementById('tgGateOverlay').classList.remove('active');
+        } else {
+          msg.classList.remove('hidden');
+          msg.textContent = `Вы ещё не подписались на ${tgAppConfig.channelUsername}. Подпишитесь и нажмите снова.`;
+        }
+      } catch (e) {
+        document.getElementById('tgGateOverlay').classList.remove('active');
+      }
+      btn.disabled = false;
+      btn.textContent = '3. Я подписался — Открыть сканер';
+    }
+
+    window.addEventListener('DOMContentLoaded', initTelegramGate);
+  </script>
+</body>
+</html>
