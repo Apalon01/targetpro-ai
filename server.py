@@ -11,6 +11,7 @@ import time
 import json
 import gzip
 import re
+import base64
 import threading
 import urllib.request
 import urllib.parse
@@ -317,16 +318,28 @@ class TargetProHandler(BaseHTTPRequestHandler):
             raw_handle = req_data.get("handle", "report")
             safe_handle = re.sub(r'[^A-Za-z0-9._-]', '', raw_handle) or "report"
             tg_user_id = str(req_data.get("tgUserId", "")).strip()
+            pdf_base64 = req_data.get("pdfBase64", "")
             html_content = req_data.get("html", "")
 
             stamp_id = datetime.now().strftime("%H%M%S")
             file_name = f"TargetPro-AI-{safe_handle}-{stamp_id}.pdf"
             pdf_path = os.path.join(PDFS_DIR, file_name)
 
-            pdf_generated = False
             pdf_bytes = None
 
-            if pisa and html_content:
+            # Priority 1: High-fidelity client-rendered PDF bytes (perfect CSS/Grid/Fonts)
+            if pdf_base64:
+                try:
+                    if "," in pdf_base64:
+                        pdf_base64 = pdf_base64.split(",", 1)[1]
+                    pdf_bytes = base64.b64decode(pdf_base64)
+                    with open(pdf_path, "wb") as f:
+                        f.write(pdf_bytes)
+                except Exception as e:
+                    print("base64 decode error:", e)
+
+            # Priority 2: Server-side pisa rendering fallback
+            if not pdf_bytes and pisa and html_content:
                 try:
                     pdf_buf = io.BytesIO()
                     pisa_status = pisa.CreatePDF(html_content, dest=pdf_buf, encoding="utf-8")
@@ -334,7 +347,6 @@ class TargetProHandler(BaseHTTPRequestHandler):
                         pdf_bytes = pdf_buf.getvalue()
                         with open(pdf_path, "wb") as f:
                             f.write(pdf_bytes)
-                        pdf_generated = True
                 except Exception as e:
                     print("pisa error:", e)
 
@@ -348,18 +360,19 @@ class TargetProHandler(BaseHTTPRequestHandler):
                     files = {"document": (file_name, pdf_bytes, "application/pdf")}
                     data = {
                         "chat_id": tg_user_id,
-                        "caption": f"📄 Готово! Ваш детальный PDF-разбор Instagram для @{safe_handle} от TargetPro AI"
+                        "caption": f"📄 *Готово! Ваш PDF-разбор Instagram для @{safe_handle}*\n\nОтправлено из TargetPro AI",
+                        "parse_mode": "Markdown"
                     }
-                    r = requests.post(doc_url, data=data, files=files, timeout=15)
+                    r = requests.post(doc_url, data=data, files=files, timeout=20)
                     if r.status_code == 200 and r.json().get("ok"):
                         sent_to_tg = True
                 except Exception as e:
                     print("TG sendDoc error:", e)
 
             resp_payload = {
-                "ok": pdf_generated or sent_to_tg,
+                "ok": bool(pdf_bytes or sent_to_tg),
                 "sentToTelegram": sent_to_tg,
-                "downloadUrl": f"/pdfs/{file_name}" if pdf_generated else "",
+                "downloadUrl": f"/pdfs/{file_name}" if (pdf_bytes and os.path.exists(pdf_path)) else "",
                 "fileName": file_name
             }
             body = json.dumps(resp_payload, ensure_ascii=False).encode("utf-8")

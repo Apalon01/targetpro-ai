@@ -1116,6 +1116,7 @@
       const fullHtml = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>TargetPro AI — @${handle}</title><style>${styleCss} body{background:#FFFFFF;padding:16px;color:#1E293B;} .card{box-shadow:none;margin-top:14px;}</style></head><body><div class="container">${clone.innerHTML}</div></body></html>`;
 
       let clientPdfDownloaded = false;
+      let pdfBase64 = '';
 
       // 1. Client-side instant PDF export (works in all browsers & phones)
       if (window.html2pdf) {
@@ -1133,9 +1134,12 @@
             html2canvas: { scale: 2, useCORS: true, logging: false },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
           };
-          await window.html2pdf().set(opt).from(exportContainer).save();
+          const worker = window.html2pdf().set(opt).from(exportContainer);
+          await worker.save();
           clientPdfDownloaded = true;
           if (btn) btn.innerHTML = '✅ PDF скачан!';
+
+          pdfBase64 = await worker.outputPdf('datauristring');
         } catch(err) {
           console.warn('html2pdf client error:', err);
         }
@@ -1149,7 +1153,7 @@
         const res = await fetch(`${apiBase}/api/export-pdf`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ handle, tgUserId, html: fullHtml })
+          body: JSON.stringify({ handle, tgUserId, pdfBase64, html: fullHtml })
         });
         const data = await res.json();
 
